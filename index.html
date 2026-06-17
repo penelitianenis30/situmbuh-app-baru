@@ -1,114 +1,121 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SiTumbuh</title>
-    <!-- Menggunakan server CDN Cloudflare & Google yang anti-blokir oleh browser/jaringan -->
-    <script src="https://cloudflare.com" crossorigin="anonymous"></script>
-    <script src="https://cloudflare.com" crossorigin></anonymous></script>
-    <script src="https://googleapis.com" crossorigin="anonymous"></script>
-    <script src="https://tailwindcss.com"></script>
-  </head>
-  <body class="bg-gray-50">
-    <div id="root"></div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiTumbuh - Aplikasi Simulasi Tumbuh Kembang</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #f9fafb; color: #1f2937; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; max-width: 400px; width: 100%; margin-top: 40px; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #f3f4f6; box-sizing: border-box; }
+        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .logo { font-size: 30px; }
+        .title { font-size: 24px; font-weight: bold; color: #111827; margin: 0; }
+        .subtitle { font-size: 14px; color: #6b7280; margin-bottom: 24px; line-height: 1.4; }
+        .form-group { margin-bottom: 16px; }
+        .label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #374151; }
+        .input, .select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
+        .input:focus, .select:focus { outline: none; border-color: #16a34a; }
+        .btn { width: 100%; padding: 12px; background-color: #16a34a; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 8px; }
+        .btn:hover { background-color: #15803d; }
+        .result { margin-top: 24px; padding: 16px; border-radius: 8px; border: 1px solid #d1d5db; display: none; }
+        .res-title { font-weight: bold; font-size: 14px; text-transform: uppercase; margin: 0 0 4px 0; }
+        .res-status { font-size: 18px; font-weight: 800; margin: 0 0 8px 0; }
+        .res-detail { font-size: 13px; margin: 0; opacity: 0.9; }
+        .normal { color: #16a34a; background-color: #f0fdf4; border-color: #bbf7d0; }
+        .stunted { color: #ea580c; background-color: #fff7ed; border-color: #ffedd5; }
+        .severe { color: #b91c1c; background-color: #fef2f2; border-color: #fee2e2; }
+        .tinggi { color: #2563eb; background-color: #eff6ff; border-color: #dbeafe; }
+    </style>
+</head>
+<body>
 
-    <script type="text/babel">
-      const { useState } = React;
+    <div class="card">
+        <div class="header">
+            <span class="logo">🌱</span>
+            <h1 class="title">SiTumbuh</h1>
+        </div>
+        <p class="subtitle">Simulasi Pengukuran Kategori Tinggi Badan Menurut Umur (0-24 Bulan)</p>
+        
+        <div class="form-group">
+            <label class="label">Nama Balita</label>
+            <input type="text" id="nama" class="input" placeholder="Masukkan nama balita">
+        </div>
 
-      const WHO_STANDARDS = {
-        0: { sd3neg: 44.2, sd2neg: 46.1, median: 49.9, sd2pos: 53.7, sd3pos: 55.6 },
-        3: { sd3neg: 57.3, sd2neg: 59.4, median: 61.4, sd2pos: 63.5, sd3pos: 65.6 },
-        6: { sd3neg: 63.3, sd2neg: 65.5, median: 67.8, sd2pos: 69.8, sd3pos: 71.9 },
-        9: { sd3neg: 67.5, sd2neg: 69.7, median: 72.0, sd2pos: 74.2, sd3pos: 76.5 },
-        12: { sd3neg: 71.0, sd2neg: 73.4, median: 75.7, sd2pos: 78.1, sd3pos: 80.5 },
-        15: { sd3neg: 74.1, sd2neg: 76.6, median: 79.1, sd2pos: 81.6, sd3pos: 84.1 },
-        18: { sd3neg: 76.9, sd2neg: 79.6, median: 82.3, sd2pos: 85.0, sd3pos: 87.7 },
-        21: { sd3neg: 79.4, sd2neg: 82.3, median: 85.1, sd2pos: 88.0, sd3pos: 90.9 },
-        24: { sd3neg: 81.7, sd2neg: 84.8, median: 87.8, sd2pos: 90.9, sd3pos: 93.9 }
-      };
+        <div class="form-group">
+            <label class="label">Usia Pengukuran</label>
+            <select id="usia" class="select">
+                <option value="0">0 Bulan</option>
+                <option value="3">3 Bulan</option>
+                <option value="6">6 Bulan</option>
+                <option value="9">9 Bulan</option>
+                <option value="12">12 Bulan</option>
+                <option value="15">15 Bulan</option>
+                <option value="18">18 Bulan</option>
+                <option value="21">21 Bulan</option>
+                <option value="24">24 Bulan</option>
+            </select>
+        </div>
 
-      function SiTumbuhApp() {
-        const [nama, setNama] = useState('');
-        const [usia, setUsia] = useState('0');
-        const [tinggi, setTinggi] = useState('');
-        const [hasil, setHasil] = useState(null);
+        <div class="form-group">
+            <label class="label">Tinggi Badan (cm)</label>
+            <input type="number" step="0.1" id="tinggi" class="input" placeholder="Contoh: 65.5">
+        </div>
 
-        const hitungStatus = () => {
-          if (!tinggi) return;
-          const targetUsia = parseInt(usia);
-          const tb = parseFloat(tinggi);
-          const standar = WHO_STANDARDS[targetUsia];
+        <button class="btn" onclick="prosesAnalisis()">Analisis Status Tumbuh</button>
 
-          let status = "Normal";
-          let warna = "text-green-600 bg-green-50 border-green-200";
+        <div id="box-hasil" class="result">
+            <p id="hasil-nama" class="res-title"></p>
+            <p id="hasil-status" class="res-status"></p>
+            <p id="hasil-detail" class="res-detail"></p>
+        </div>
+    </div>
 
-          if (tb < standar.sd3neg) {
-            status = "Sangat Pendek (Severely Stunted)";
-            warna = "text-red-700 bg-red-50 border-red-200";
-          } else if (tb < standar.sd2neg) {
-            status = "Pendek (Stunted)";
-            warna = "text-orange-600 bg-orange-50 border-orange-200";
-          } else if (tb > standar.sd2pos) {
-            status = "Tinggi";
-            warna = "text-blue-600 bg-blue-50 border-blue-200";
-          }
-
-          setHasil({ status, warna, median: standar.median, tb });
+    <script>
+        const WHO_STANDARDS = {
+            0: { sd3neg: 44.2, sd2neg: 46.1, median: 49.9, sd2pos: 53.7, sd3pos: 55.6 },
+            3: { sd3neg: 57.3, sd2neg: 59.4, median: 61.4, sd2pos: 63.5, sd3pos: 65.6 },
+            6: { sd3neg: 63.3, sd2neg: 65.5, median: 67.8, sd2pos: 69.8, sd3pos: 71.9 },
+            9: { sd3neg: 67.5, sd2neg: 69.7, median: 72.0, sd2pos: 74.2, sd3pos: 76.5 },
+            12: { sd3neg: 71.0, sd2neg: 73.4, median: 75.7, sd2pos: 78.1, sd3pos: 80.5 },
+            15: { sd3neg: 74.1, sd2neg: 76.6, median: 79.1, sd2pos: 81.6, sd3pos: 84.1 },
+            18: { sd3neg: 76.9, sd2neg: 79.6, median: 82.3, sd2pos: 85.0, sd3pos: 87.7 },
+            21: { sd3neg: 79.4, sd2neg: 82.3, median: 85.1, sd2pos: 88.0, sd3pos: 90.9 },
+            24: { sd3neg: 81.7, sd2neg: 84.8, median: 87.8, sd2pos: 90.9, sd3pos: 93.9 }
         };
 
-        return (
-          <div className="max-w-md mx-auto my-10 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
-            <div className="flex items-center space-x-3 mb-6">
-              <span className="text-3xl">🌱</span>
-              <h1 className="text-2xl font-bold text-gray-800">SiTumbuh</h1>
-            </div>
-            <p className="text-gray-500 text-sm mb-6">Simulasi Pengukuran Kategori Tinggi Badan Menurut Umur (0-24 Bulan)</p>
+        function prosesAnalisis() {
+            const namaInput = document.getElementById('nama').value || 'Balita';
+            const usiaInput = parseInt(document.getElementById('usia').value);
+            const tinggiInput = parseFloat(document.getElementById('tinggi').value);
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Balita</label>
-                <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="Masukkan nama" value={nama} onChange={(e) => setNama(e.target.value)} />
-              </div>
+            if (!tinggiInput) {
+                alert('Mohon masukkan angka tinggi badan terlebih dahulu!');
+                return;
+            }
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Usia Pengukuran</label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-green-500 focus:outline-none" value={usia} onChange={(e) => setUsia(e.target.value)}>
-                  <option value="0">0 Bulan</option>
-                  <option value="3">3 Bulan</option>
-                  <option value="6">6 Bulan</option>
-                  <option value="9">9 Bulan</option>
-                  <option value="12">12 Bulan</option>
-                  <option value="15">15 Bulan</option>
-                  <option value="18">18 Bulan</option>
-                  <option value="21">21 Bulan</option>
-                  <option value="24">24 Bulan</option>
-                </select>
-              </div>
+            const standar = WHO_STANDARDS[usiaInput];
+            let status = "Normal";
+            let kelasWarna = "normal";
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tinggi Badan (cm)</label>
-                <input type="number" step="0.1" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="Contoh: 65.5" value={tinggi} onChange={(e) => setTinggi(e.target.value)} />
-              </div>
+            if (tinggiInput < standar.sd3neg) {
+                status = "Sangat Pendek (Severely Stunted)";
+                kelasWarna = "severe";
+            } else if (tinggiInput < standar.sd2neg) {
+                status = "Pendek (Stunted)";
+                kelasWarna = "stunted";
+            } else if (tinggiInput > standar.sd2pos) {
+                status = "Tinggi";
+                kelasWarna = "tinggi";
+            }
 
-              <button onClick={hitungStatus} className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition shadow-md">
-                Analisis Status Tumbuh
-              </button>
-
-              {hasil && (
-                <div className={`p-4 rounded-lg border mt-6 ${hasil.warna}`}>
-                  <h3 className="font-bold text-sm uppercase tracking-wide">Hasil Analisis {nama}:</h3>
-                  <p className="text-xl font-black my-1">{hasil.status}</p>
-                  <p className="text-xs opacity-80 mt-2">Tinggi Badan: {hasil.tb} cm | Standar Median WHO: {hasil.median} cm</p>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      }
-
-      const root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(<SiTumbuhApp />);
+            const boxHasil = document.getElementById('box-hasil');
+            boxHasil.className = "result " + kelasWarna;
+            boxHasil.style.display = "block";
+            
+            document.getElementById('hasil-nama').innerText = "Hasil Analisis " + namaInput + ":";
+            document.getElementById('hasil-status').innerText = status;
+            document.getElementById('hasil-detail').innerText = "Tinggi Badan: " + tinggiInput + " cm | Standar Median WHO: " + standar.median + " cm";
+        }
     </script>
-  </body>
+</body>
 </html>
