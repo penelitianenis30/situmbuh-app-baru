@@ -1,0 +1,1363 @@
+import React, { useState, useMemo } from 'react';
+
+// ==========================================
+// DATASET ACUAN WHO (0 - 24 BULAN)
+// ==========================================
+const WHO_GROWTH_STANDARDS = {
+  L: {
+    // Tinggi Badan Menurut Umur (HAZ) - dalam cm
+    haz: {
+      0: { sd3neg: 44.2, sd2neg: 46.1, median: 49.9, sd2pos: 53.7, sd3pos: 55.6 },
+      3: { sd3neg: 57.3, sd2neg: 59.4, median: 61.4, sd2pos: 63.5, sd3pos: 65.6 },
+      6: { sd3neg: 63.3, sd2neg: 65.5, median: 67.6, sd2pos: 69.8, sd3pos: 71.9 },
+      9: { sd3neg: 67.5, sd2neg: 69.7, median: 72.0, sd2pos: 74.2, sd3pos: 76.5 },
+      12: { sd3neg: 71.0, sd2neg: 73.4, median: 75.7, sd2pos: 78.1, sd3pos: 80.5 },
+      15: { sd3neg: 74.1, sd2neg: 76.6, median: 79.1, sd2pos: 81.6, sd3pos: 84.1 },
+      18: { sd3neg: 76.9, sd2neg: 79.6, median: 82.3, sd2pos: 85.0, sd3pos: 87.7 },
+      21: { sd3neg: 79.4, sd2neg: 82.3, median: 85.1, sd2pos: 88.0, sd3pos: 90.9 },
+      24: { sd3neg: 81.7, sd2neg: 84.8, median: 87.8, sd2pos: 90.9, sd3pos: 93.9 }
+    },
+    // Berat Badan Menurut Umur (WAZ) - dalam kg
+    waz: {
+      0: { sd3neg: 2.1, sd2neg: 2.5, median: 3.3, sd2pos: 4.4, sd3pos: 5.0 },
+      3: { sd3neg: 4.4, sd2neg: 5.0, median: 6.4, sd2pos: 8.0, sd3pos: 8.9 },
+      6: { sd3neg: 5.9, sd2neg: 6.6, median: 7.9, sd2pos: 9.8, sd3pos: 10.9 },
+      9: { sd3neg: 7.0, sd2neg: 7.7, median: 9.2, sd2pos: 11.2, sd3pos: 12.5 },
+      12: { sd3neg: 7.8, sd2neg: 8.6, median: 10.2, sd2pos: 12.4, sd3pos: 13.9 },
+      15: { sd3neg: 8.4, sd2neg: 9.3, median: 11.0, sd2pos: 13.4, sd3pos: 15.0 },
+      18: { sd3neg: 9.0, sd2neg: 9.9, median: 11.7, sd2pos: 14.3, sd3pos: 16.0 },
+      21: { sd3neg: 9.5, sd2neg: 10.5, median: 12.4, sd2pos: 15.2, sd3pos: 17.0 },
+      24: { sd3neg: 10.1, sd2neg: 11.1, median: 13.0, sd2pos: 16.0, sd3pos: 18.0 }
+    }
+  },
+  P: {
+    haz: {
+      0: { sd3neg: 43.6, sd2neg: 45.4, median: 49.1, sd2pos: 52.9, sd3pos: 54.7 },
+      3: { sd3neg: 55.6, sd2neg: 57.7, median: 59.8, sd2pos: 61.9, sd3pos: 64.0 },
+      6: { sd3neg: 61.2, sd2neg: 63.5, median: 65.7, sd2pos: 68.0, sd3pos: 70.3 },
+      9: { sd3neg: 65.3, sd2neg: 67.7, median: 70.1, sd2pos: 72.6, sd3pos: 75.0 },
+      12: { sd3neg: 68.9, sd2neg: 71.4, median: 74.0, sd2pos: 76.6, sd3pos: 79.2 },
+      15: { sd3neg: 72.0, sd2neg: 74.6, median: 77.5, sd2pos: 80.2, sd3pos: 83.0 },
+      18: { sd3neg: 74.9, sd2neg: 77.6, median: 80.5, sd2pos: 83.5, sd3pos: 86.5 },
+      21: { sd3neg: 77.5, sd2neg: 80.3, median: 83.4, sd2pos: 86.5, sd3pos: 89.6 },
+      24: { sd3neg: 80.0, sd2neg: 82.9, median: 86.0, sd2pos: 89.2, sd3pos: 92.5 }
+    },
+    waz: {
+      0: { sd3neg: 2.0, sd2neg: 2.4, median: 3.2, sd2pos: 4.2, sd3pos: 4.8 },
+      3: { sd3neg: 4.0, sd2neg: 4.6, median: 5.8, sd2pos: 7.2, sd3pos: 8.0 },
+      6: { sd3neg: 5.3, sd2neg: 6.1, median: 7.3, sd2pos: 9.0, sd3pos: 10.0 },
+      9: { sd3neg: 6.3, sd2neg: 7.1, median: 8.5, sd2pos: 10.4, sd3pos: 11.6 },
+      12: { sd3neg: 7.1, sd2neg: 7.9, median: 9.5, sd2pos: 11.6, sd3pos: 13.0 },
+      15: { sd3neg: 7.7, sd2neg: 8.5, median: 10.2, sd2pos: 12.5, sd3pos: 14.0 },
+      18: { sd3neg: 8.2, sd2neg: 9.1, median: 10.9, sd2pos: 13.4, sd3pos: 15.0 },
+      21: { sd3neg: 8.7, sd2neg: 9.7, median: 11.5, sd2pos: 14.2, sd3pos: 16.0 },
+      24: { sd3neg: 9.2, sd2neg: 10.2, median: 12.2, sd2pos: 15.0, sd3pos: 17.0 }
+    }
+  }
+};
+
+// ==========================================
+// FUNGSI UTILITAS KALKULASI & KLASIFIKASI
+// ==========================================
+const calculateZScore = (value, age, gender, metric) => {
+  const genderData = WHO_GROWTH_STANDARDS[gender];
+  if (!genderData || !genderData[metric]) return 0;
+
+  // Temukan key usia terdekat dalam dataset
+  const ageKeys = Object.keys(genderData[metric]).map(Number);
+  const closestAge = ageKeys.reduce((prev, curr) => 
+    Math.abs(curr - age) < Math.abs(prev - age) ? curr : prev
+  );
+
+  const ref = genderData[metric][closestAge];
+  const val = parseFloat(value);
+
+  let zScore = 0;
+  if (val < ref.median) {
+    zScore = (val - ref.median) / (ref.median - ref.sd2neg);
+  } else {
+    zScore = (val - ref.median) / (ref.sd2pos - ref.median);
+  }
+  return parseFloat(zScore.toFixed(2));
+};
+
+const getStuntingStatus = (haz) => {
+  if (haz < -3) return { label: 'Sangat Pendek (Severely Stunted)', color: 'text-rose-600 bg-rose-50 border-rose-200' };
+  if (haz < -2) return { label: 'Pendek (Stunted)', color: 'text-amber-600 bg-amber-50 border-amber-200' };
+  return { label: 'Normal', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' };
+};
+
+const getNutritionStatus = (waz) => {
+  if (waz < -3) return { label: 'Gizi Buruk', color: 'text-rose-600 bg-rose-100' };
+  if (waz < -2) return { label: 'Gizi Kurang', color: 'text-amber-600 bg-amber-100' };
+  if (waz > 2) return { label: 'Gizi Lebih', color: 'text-blue-600 bg-blue-100' };
+  return { label: 'Gizi Baik (Normal)', color: 'text-emerald-600 bg-emerald-100' };
+};
+
+const calculateAgeInMonths = (birthDate, checkDate) => {
+  const birth = new Date(birthDate);
+  const check = new Date(checkDate);
+  const yearsDiff = check.getFullYear() - birth.getFullYear();
+  const monthsDiff = check.getMonth() - birth.getMonth();
+  const totalMonths = yearsDiff * 12 + monthsDiff;
+  return Math.max(0, totalMonths);
+};
+
+// Deteksi Risiko Stunting Engine
+const evaluateStuntingRisk = (child, lastExam) => {
+  let score = 0;
+  const indicators = [];
+
+  if (child.birthWeight < 2.5) {
+    score += 1;
+    indicators.push("Berat Lahir Rendah (BBLR) < 2.5 kg");
+  }
+  if (child.isPremature) {
+    score += 1;
+    indicators.push("Kelahiran Prematur");
+  }
+  if (lastExam) {
+    if (!lastExam.exclusiveBreastfeeding && lastExam.ageMonths <= 6) {
+      score += 1;
+      indicators.push("Tidak mendapat ASI Eksklusif (< 6 Bln)");
+    }
+    if (lastExam.infectionHistory) {
+      score += 2;
+      indicators.push("Memiliki riwayat penyakit infeksi berulang");
+    }
+    if (lastExam.haz < -2) {
+      score += 3;
+      indicators.push("Z-Score Tinggi Badan menurut Umur (HAZ) < -2 SD");
+    }
+  }
+  if (child.poorSanitation) {
+    score += 1;
+    indicators.push("Sanitasi rumah tidak memadai");
+  }
+
+  let level = "Rendah";
+  let color = "bg-emerald-500 text-white";
+  if (score >= 5) {
+    level = "Tinggi";
+    color = "bg-rose-500 text-white";
+  } else if (score >= 3) {
+    level = "Sedang";
+    color = "bg-amber-500 text-white";
+  }
+
+  return { score, level, color, indicators };
+};
+
+// ==========================================
+// DATASET AWAL (MOCK DATABASE STATE)
+// ==========================================
+const initialChildren = [
+  {
+    id: "CH-001",
+    nik: "3273010412230001",
+    name: "Muhammad Rizky",
+    birthDate: "2024-12-04",
+    gender: "L",
+    motherName: "Siti Aminah",
+    fatherName: "Ahmad Subarjo",
+    address: "Jl. Diponegoro No. 12",
+    phone: "081234567890",
+    posyandu: "Melati 1",
+    kelurahan: "Citarum",
+    kecamatan: "Bandung Wetan",
+    birthWeight: 2.3, // BBLR
+    birthLength: 46,
+    isPremature: true,
+    poorSanitation: true,
+    examinations: [
+      {
+        id: "EX-001",
+        date: "2025-06-15",
+        ageMonths: 6,
+        weight: 6.1,
+        height: 62.0,
+        headCircumference: 41,
+        muac: 11.5,
+        exclusiveBreastfeeding: false,
+        mpasi: true,
+        infectionHistory: true,
+        immunizationComplete: true,
+        haz: -2.55,
+        waz: -2.31,
+      },
+      {
+        id: "EX-002",
+        date: "2025-12-15",
+        ageMonths: 12,
+        weight: 7.5,
+        height: 69.5,
+        headCircumference: 44,
+        muac: 12.0,
+        exclusiveBreastfeeding: false,
+        mpasi: true,
+        infectionHistory: false,
+        immunizationComplete: true,
+        haz: -2.58,
+        waz: -2.61,
+      }
+    ]
+  },
+  {
+    id: "CH-002",
+    nik: "3273014506240003",
+    name: "Aisyah Putri",
+    birthDate: "2025-06-10",
+    gender: "P",
+    motherName: "Rina Wijaya",
+    fatherName: "Hendra Wijaya",
+    address: "Gg. Masjid No. 45",
+    phone: "089876543210",
+    posyandu: "Flamboyan 3",
+    kelurahan: "Tamansari",
+    kecamatan: "Bandung Wetan",
+    birthWeight: 3.2,
+    birthLength: 49,
+    isPremature: false,
+    poorSanitation: false,
+    examinations: [
+      {
+        id: "EX-003",
+        date: "2025-12-10",
+        ageMonths: 6,
+        weight: 7.4,
+        height: 66.0,
+        headCircumference: 42,
+        muac: 13.5,
+        exclusiveBreastfeeding: true,
+        mpasi: false,
+        infectionHistory: false,
+        immunizationComplete: true,
+        haz: 0.14,
+        waz: 0.08,
+      }
+    ]
+  }
+];
+
+const initialEducations = [
+  {
+    id: 1,
+    title: "Pentingnya Protein Hewani untuk Mencegah Stunting",
+    category: "Gizi Seimbang",
+    summary: "Protein hewani memiliki kandungan asam amino esensial yang lebih lengkap dibanding protein nabati demi mendukung tumbuh kembang tulang balita.",
+    content: "Pemberian satu telur per hari atau daging ikan terbukti signifikan membantu mencegah kejadian gagal tumbuh pada balita di masa emas 1000 Hari Pertama Kehidupan (HPK)."
+  },
+  {
+    id: 2,
+    title: "Panduan MPASI Sehat Mulai Usia 6 Bulan",
+    category: "MPASI",
+    summary: "Memasuki usia 6 bulan, ASI saja tidak cukup untuk memenuhi gizi harian. Berikan MPASI bertekstur lembut secara bertahap.",
+    content: "Mulai dengan bubur lumat berenergi padat. Jaga kebersihan peralatan makan dan berikan variasi sayur, buah, serta sumber zat besi tinggi seperti hati ayam."
+  },
+  {
+    id: 3,
+    title: "Mengawal Imunisasi Dasar Lengkap Balita",
+    category: "Imunisasi",
+    summary: "Imunisasi lengkap melatih sistem imun tubuh anak dari serangan infeksi berulang yang mampu menyedot energi pertumbuhan tubuh.",
+    content: "Pastikan anak mendapatkan imunisasi BCG, DPT-HB-HIB, Polio, Campak Rubella sebelum menginjak usia 18 bulan sesuai jadwal posyandu setempat."
+  }
+];
+
+export default function App() {
+  // ==========================================
+  // STATE UTAMA SISTEM
+  // ==========================================
+  const [currentUserRole, setCurrentUserRole] = useState('kader'); // Admin, Puskesmas, Kader, Orangtua
+  const [childrenList, setChildrenList] = useState(initialChildren);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedChildId, setSelectedChildId] = useState('CH-001');
+  const [educationList] = useState(initialEducations);
+
+  // Form States (Pendaftaran Anak Baru)
+  const [newChild, setNewChild] = useState({
+    nik: '', name: '', birthDate: '', gender: 'L',
+    motherName: '', fatherName: '', address: '', phone: '',
+    posyandu: 'Melati 1', kelurahan: 'Citarum', kecamatan: 'Bandung Wetan',
+    birthWeight: '', birthLength: '', isPremature: false, poorSanitation: false
+  });
+
+  // Form States (Pemeriksaan Berkala)
+  const [newExam, setNewExam] = useState({
+    date: new Date().toISOString().split('T')[0],
+    weight: '', height: '', headCircumference: '', muac: '',
+    exclusiveBreastfeeding: true, mpasi: false, infectionHistory: false, immunizationComplete: true
+  });
+
+  // Dialog/Modal feedback message
+  const [alertMessage, setAlertMessage] = useState(null);
+
+  // Filter wilayah laporan
+  const [filterPosyandu, setFilterPosyandu] = useState('Semua');
+  const [filterBulan, setFilterBulan] = useState('Semua');
+
+  // Utility showAlert
+  const triggerAlert = (title, message, type = 'success') => {
+    setAlertMessage({ title, message, type });
+    setTimeout(() => setAlertMessage(null), 5000);
+  };
+
+  // ==========================================
+  // PROSES DATA & ANALISIS (MEMOIZED)
+  // ==========================================
+  const activeChild = useMemo(() => {
+    return childrenList.find(c => c.id === selectedChildId) || childrenList[0];
+  }, [childrenList, selectedChildId]);
+
+  const statistics = useMemo(() => {
+    let total = childrenList.length;
+    let stuntedCount = 0;
+    let severelyStuntedCount = 0;
+    let highRiskCount = 0;
+    let goodNutritionCount = 0;
+
+    childrenList.forEach(child => {
+      const exams = child.examinations;
+      const lastExam = exams && exams.length > 0 ? exams[exams.length - 1] : null;
+      
+      if (lastExam) {
+        if (lastExam.haz < -3) severelyStuntedCount++;
+        else if (lastExam.haz < -2) stuntedCount++;
+
+        if (lastExam.waz >= -2 && lastExam.waz <= 2) goodNutritionCount++;
+      }
+
+      const risk = evaluateStuntingRisk(child, lastExam);
+      if (risk.level === "Tinggi") highRiskCount++;
+    });
+
+    const stuntingPercentage = total > 0 ? (((stuntedCount + severelyStuntedCount) / total) * 100).toFixed(1) : 0;
+
+    return {
+      total,
+      stunted: stuntedCount,
+      severelyStunted: severelyStuntedCount,
+      stuntingRate: stuntingPercentage,
+      highRisk: highRiskCount,
+      goodNutrition: goodNutritionCount
+    };
+  }, [childrenList]);
+
+  // ==========================================
+  // MUTASI DATA (SUBMIT ACTION HANDLERS)
+  // ==========================================
+  const handleAddChild = (e) => {
+    e.preventDefault();
+    if (newChild.nik.length !== 16) {
+      triggerAlert("Gagal Mendaftar", "NIK anak wajib terdiri dari 16 digit angka.", "error");
+      return;
+    }
+
+    const childId = `CH-0${childrenList.length + 1}`;
+    const childToAdd = {
+      ...newChild,
+      id: childId,
+      birthWeight: parseFloat(newChild.birthWeight),
+      birthLength: parseFloat(newChild.birthLength),
+      examinations: []
+    };
+
+    setChildrenList([...childrenList, childToAdd]);
+    setSelectedChildId(childId);
+    triggerAlert("Pendaftaran Berhasil", `${newChild.name} telah terdaftar dalam sistem SiTumbuh.`, "success");
+    
+    // Reset Form
+    setNewChild({
+      nik: '', name: '', birthDate: '', gender: 'L',
+      motherName: '', fatherName: '', address: '', phone: '',
+      posyandu: 'Melati 1', kelurahan: 'Citarum', kecamatan: 'Bandung Wetan',
+      birthWeight: '', birthLength: '', isPremature: false, poorSanitation: false
+    });
+    setActiveTab('dashboard');
+  };
+
+  const handleAddExamination = (e) => {
+    e.preventDefault();
+    if (!activeChild) return;
+
+    const ageMonths = calculateAgeInMonths(activeChild.birthDate, newExam.date);
+    if (ageMonths > 59) {
+      triggerAlert("Batas Usia Terlewati", "SiTumbuh memantau balita usia maksimal 59 bulan.", "error");
+      return;
+    }
+
+    const haz = calculateZScore(newExam.height, ageMonths, activeChild.gender, 'haz');
+    const waz = calculateZScore(newExam.weight, ageMonths, activeChild.gender, 'waz');
+
+    const examRecord = {
+      id: `EX-0${Date.now()}`,
+      date: newExam.date,
+      ageMonths,
+      weight: parseFloat(newExam.weight),
+      height: parseFloat(newExam.height),
+      headCircumference: parseFloat(newExam.headCircumference || 0),
+      muac: parseFloat(newExam.muac || 0),
+      exclusiveBreastfeeding: newExam.exclusiveBreastfeeding,
+      mpasi: newExam.mpasi,
+      infectionHistory: newExam.infectionHistory,
+      immunizationComplete: newExam.immunizationComplete,
+      haz,
+      waz
+    };
+
+    const updatedChildren = childrenList.map(c => {
+      if (c.id === activeChild.id) {
+        return {
+          ...c,
+          examinations: [...c.examinations, examRecord].sort((a, b) => new Date(a.date) - new Date(b.date))
+        };
+      }
+      return c;
+    });
+
+    setChildrenList(updatedChildren);
+    triggerAlert("Hasil Pengukuran Disimpan", `Hasil pemeriksaan untuk ${activeChild.name} berhasil dihitung dan diklasifikasikan otomatis.`, "success");
+    
+    // Reset Form
+    setNewExam({
+      date: new Date().toISOString().split('T')[0],
+      weight: '', height: '', headCircumference: '', muac: '',
+      exclusiveBreastfeeding: true, mpasi: false, infectionHistory: false, immunizationComplete: true
+    });
+  };
+
+  // Simulating WhatsApp & Push Notifications
+  const handleTriggerNotification = (type, date) => {
+    triggerAlert(
+      "Notifikasi Terjadwal",
+      `Pesan pengingat penimbangan tanggal ${date} berhasil disimulasikan via ${type}.`,
+      "success"
+    );
+  };
+
+  // Export Mock Actions
+  const handleExportData = (format) => {
+    triggerAlert("Ekspor Berhasil", `Seluruh data pertumbuhan anak telah berhasil diekspor ke file .${format}.`, "success");
+  };
+
+  // ==========================================
+  // RENDER GRAFIK PERTUMBUHAN SVG CUSTOM
+  // ==========================================
+  const renderGrowthChart = () => {
+    if (!activeChild || activeChild.examinations.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center h-48 bg-slate-50 border border-dashed rounded-xl">
+          <svg className="w-10 h-10 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"></path></svg>
+          <span className="text-xs text-slate-500 font-medium">Belum ada rekam medis pemeriksaan untuk balita ini</span>
+        </div>
+      );
+    }
+
+    const width = 500;
+    const height = 280;
+    const padding = 40;
+
+    // Ambil rentang kurva standardisasi (0 s.d 24 bulan)
+    const months = [0, 3, 6, 9, 12, 15, 18, 21, 24];
+    const genderRef = WHO_GROWTH_STANDARDS[activeChild.gender].haz;
+
+    // Cari batas minimum dan maksimum untuk skala sumbu Y grafik tinggi (cm)
+    const yMin = 40;
+    const yMax = 100;
+
+    const getX = (m) => padding + (m / 24) * (width - 2 * padding);
+    const getY = (hVal) => height - padding - ((hVal - yMin) / (yMax - yMin)) * (height - 2 * padding);
+
+    // Bikin string jalur SVG kurva standardisasi WHO
+    const medianPath = months.map(m => `${getX(m)},${getY(genderRef[m].median)}`).join(' L ');
+    const sd2NegPath = months.map(m => `${getX(m)},${getY(genderRef[m].sd2neg)}`).join(' L ');
+    const sd3NegPath = months.map(m => `${getX(m)},${getY(genderRef[m].sd3neg)}`).join(' L ');
+
+    // Plot rekam medis riil anak aktif
+    const childExams = activeChild.examinations;
+
+    return (
+      <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-semibold text-slate-800">Visualisasi Kurva Panjang Badan (WHO Standards)</h4>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">Gender: {activeChild.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</span>
+        </div>
+        <div className="relative overflow-x-auto">
+          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto min-w-[400px]">
+            {/* Grid Lines Horisontal */}
+            {[50, 60, 70, 80, 90, 100].map((val) => (
+              <g key={val}>
+                <line x1={padding} y1={getY(val)} x2={width - padding} y2={getY(val)} stroke="#f1f5f9" strokeWidth="1" />
+                <text x={padding - 10} y={getY(val) + 4} textAnchor="end" className="text-[10px] fill-slate-400 font-medium">{val} cm</text>
+              </g>
+            ))}
+
+            {/* Grid Lines Vertikal (Bulan) */}
+            {months.map((m) => (
+              <g key={m}>
+                <line x1={getX(m)} y1={padding} x2={getX(m)} y2={height - padding} stroke="#f1f5f9" strokeWidth="1" />
+                <text x={getX(m)} y={height - padding + 15} textAnchor="middle" className="text-[10px] fill-slate-400 font-medium">{m} B</text>
+              </g>
+            ))}
+
+            {/* Garis Kurva Standardisasi WHO */}
+            <path d={`M ${medianPath}`} fill="none" stroke="#10b981" strokeWidth="2.5" /> {/* Median (Hijau) */}
+            <path d={`M ${sd2NegPath}`} fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="3 3" /> {/* -2 SD (Kuning) */}
+            <path d={`M ${sd3NegPath}`} fill="none" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3 3" /> {/* -3 SD (Merah) */}
+
+            {/* Label Kurva */}
+            <text x={width - padding + 5} y={getY(genderRef[24].median) + 3} className="text-[9px] fill-emerald-600 font-bold">Median</text>
+            <text x={width - padding + 5} y={getY(genderRef[24].sd2neg) + 3} className="text-[9px] fill-amber-500 font-bold">-2 SD</text>
+            <text x={width - padding + 5} y={getY(genderRef[24].sd3neg) + 3} className="text-[9px] fill-rose-500 font-bold">-3 SD</text>
+
+            {/* Garis Jalur Pertumbuhan Anak Aktif */}
+            {childExams.length > 0 && (
+              <>
+                <path 
+                  d={`M ${childExams.map(ex => `${getX(ex.ageMonths)},${getY(ex.height)}`).join(' L ')}`} 
+                  fill="none" 
+                  stroke="#3b82f6" 
+                  strokeWidth="3" 
+                />
+                {childExams.map((ex, idx) => (
+                  <g key={idx} className="group cursor-pointer">
+                    <circle 
+                      cx={getX(ex.ageMonths)} 
+                      cy={getY(ex.height)} 
+                      r="5" 
+                      fill="#2563eb" 
+                      stroke="#ffffff" 
+                      strokeWidth="2" 
+                    />
+                    <text 
+                      x={getX(ex.ageMonths)} 
+                      y={getY(ex.height) - 10} 
+                      textAnchor="middle" 
+                      className="text-[9px] font-bold fill-blue-700 bg-white"
+                    >
+                      {ex.height}cm
+                    </text>
+                  </g>
+                ))}
+              </>
+            )}
+          </svg>
+        </div>
+        <div className="flex justify-center gap-6 mt-2 text-[11px] font-semibold">
+          <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-emerald-500 inline-block"></span> Median WHO (Normal)</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 border-t border-dashed border-amber-500 inline-block"></span> Batas Stunting (-2 SD)</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-1 bg-blue-600 inline-block"></span> Pertumbuhan Anak Anda</span>
+        </div>
+      </div>
+    );
+  };
+
+  // ==========================================
+  // VIEW RENDERER (DASHBOARD & PAGES)
+  // ==========================================
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-700 antialiased flex flex-col">
+      
+      {/* GLOBAL FEEDBACK NOTIFICATION ALERT */}
+      {alertMessage && (
+        <div className="fixed top-4 right-4 z-50 animate-bounce">
+          <div className={`p-4 rounded-xl shadow-xl border flex items-center gap-3 ${
+            alertMessage.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+          }`}>
+            <span className="text-xl">
+              {alertMessage.type === 'success' ? '🎉' : '⚠️'}
+            </span>
+            <div>
+              <p className="font-bold text-xs">{alertMessage.title}</p>
+              <p className="text-[11px] opacity-90">{alertMessage.message}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HEADER UTAMA & SIMULATOR PERAN */}
+      <header className="bg-white border-b border-slate-100 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-md shadow-emerald-200">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-11.314l.707.707m11.314 11.314l.707.707M12 5a7 7 0 100 14 7 7 0 000-14z"></path></svg>
+            </div>
+            <div>
+              <h1 className="text-base font-extrabold tracking-tight text-slate-900 flex items-center gap-1.5">
+                SiTumbuh <span className="text-xs font-normal text-slate-400">v2.5</span>
+              </h1>
+              <p className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase">Sistem Deteksi Dini Risiko Stunting</p>
+            </div>
+          </div>
+
+          {/* SIMULATOR ROLE SELECTOR (Untuk Penguji Kredensial & Penggunaan Fitur) */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl self-start md:self-auto">
+            <span className="text-[10px] font-bold text-slate-400 px-2 uppercase">Peran Tes:</span>
+            {['admin', 'puskesmas', 'kader', 'orangtua'].map(role => (
+              <button
+                key={role}
+                onClick={() => {
+                  setCurrentUserRole(role);
+                  triggerAlert("Sesi Berubah", `Anda sekarang masuk sebagai ${role.toUpperCase()}`, "success");
+                }}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all capitalize ${
+                  currentUserRole === role 
+                    ? 'bg-emerald-600 text-white shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                {role}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* CORE WEB LAYOUT CONTENT */}
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
+        
+        {/* SIDEBAR NAVIGATION */}
+        <aside className="lg:w-64 flex-shrink-0">
+          <nav className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-1">
+            <button 
+              onClick={() => setActiveTab('dashboard')}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${
+                activeTab === 'dashboard' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              📊 Ringkasan Analitik
+            </button>
+            <button 
+              onClick={() => setActiveTab('data-anak')}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${
+                activeTab === 'data-anak' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              👶 Daftar Balita & Input
+            </button>
+            <button 
+              onClick={() => setActiveTab('laporan')}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${
+                activeTab === 'laporan' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              📋 Laporan Puskesmas
+            </button>
+            <button 
+              onClick={() => setActiveTab('edukasi')}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${
+                activeTab === 'edukasi' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              💡 Edukasi & Intervensi
+            </button>
+          </nav>
+
+          {/* QUICK DISCLAIMER IN PANEL */}
+          <div className="mt-4 bg-slate-100 border border-slate-200 p-3.5 rounded-2xl text-[10px] text-slate-500 leading-relaxed font-medium">
+            <p className="font-bold text-slate-700 mb-1">📢 SANGGAHAN MEDIS</p>
+            Aplikasi ini adalah alat skrining dini mandiri. Hasil bukan diagnosis klinis mutlak. Seluruh data wajib dirujuk ke tenaga kesehatan profesional di Puskesmas.
+          </div>
+        </aside>
+
+        {/* CONTAINER UTAMA INTERAKTIF */}
+        <main className="flex-1 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm min-h-[500px]">
+          
+          {/* ==========================================
+              TAB 1: RINGKASAN ANALITIK (DASHBOARD)
+              ========================================== */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-800">Dashboard Pemantauan Wilayah</h2>
+                  <p className="text-xs text-slate-400">Ringkasan epidemiologi stunting dan capaian gizi wilayah kerja Anda.</p>
+                </div>
+                <div className="text-xs bg-slate-100 font-bold text-slate-600 px-3 py-1.5 rounded-lg">
+                  Periode Aktif: Juni 2026
+                </div>
+              </div>
+
+              {/* KPI CARDS */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl shadow-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider opacity-85">Anak Terdaftar</p>
+                  <p className="text-2xl font-black mt-1">{statistics.total}</p>
+                  <p className="text-[9px] opacity-75 mt-1">Balita Usia 0-24 Bulan</p>
+                </div>
+                <div className="p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Kejadian Stunting</p>
+                  <p className="text-2xl font-black text-rose-600 mt-1">{statistics.stunted + statistics.severelyStunted}</p>
+                  <p className="text-[9px] text-rose-500 font-bold mt-1">Persentase: {statistics.stuntingRate}%</p>
+                </div>
+                <div className="p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Risiko Tinggi</p>
+                  <p className="text-2xl font-black text-amber-500 mt-1">{statistics.highRisk}</p>
+                  <p className="text-[9px] text-amber-600 font-bold mt-1">Butuh Intervensi Segera</p>
+                </div>
+                <div className="p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Gizi Baik</p>
+                  <p className="text-2xl font-black text-emerald-600 mt-1">{statistics.goodNutrition}</p>
+                  <p className="text-[9px] text-emerald-500 font-bold mt-1">Pertumbuhan Sehat</p>
+                </div>
+              </div>
+
+              {/* SECTION DETAIL ANAK AKTIF & KURVA WHO */}
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                
+                {/* PILIH ANAK & DETEKSI ENGINE */}
+                <div className="xl:col-span-1 space-y-4">
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pilih Balita Pemantauan:</label>
+                    <select 
+                      value={selectedChildId}
+                      onChange={(e) => setSelectedChildId(e.target.value)}
+                      className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      {childrenList.map(c => (
+                        <option key={c.id} value={c.id}>{c.name} ({c.gender})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* HASIL MESIN RISIKO STUNTING */}
+                  {activeChild && (
+                    <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
+                      <div className="p-4 bg-slate-900 text-white">
+                        <span className="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Hasil Evaluasi Engine</span>
+                        <h4 className="text-sm font-bold mt-1">Deteksi Risiko Stunting</h4>
+                      </div>
+                      <div className="p-4 space-y-3">
+                        <div className="flex items-center justify-between border-b pb-3">
+                          <span className="text-xs font-semibold text-slate-500">Skor Kerentanan:</span>
+                          <span className={`text-xs font-extrabold px-3 py-1 rounded-full ${
+                            evaluateStuntingRisk(activeChild, activeChild.examinations[activeChild.examinations.length-1]).color
+                          }`}>
+                            {evaluateStuntingRisk(activeChild, activeChild.examinations[activeChild.examinations.length-1]).level} ({evaluateStuntingRisk(activeChild, activeChild.examinations[activeChild.examinations.length-1]).score} Pts)
+                          </span>
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase mb-1.5">Faktor Penyebab Terdeteksi:</p>
+                          {evaluateStuntingRisk(activeChild, activeChild.examinations[activeChild.examinations.length-1]).indicators.length === 0 ? (
+                            <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1">✅ Tidak ada indikator risiko terdeteksi.</p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {evaluateStuntingRisk(activeChild, activeChild.examinations[activeChild.examinations.length-1]).indicators.map((ind, i) => (
+                                <li key={i} className="text-xs text-rose-600 font-semibold flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full inline-block"></span>
+                                  {ind}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* GRAPH VISUALIZATION */}
+                <div className="xl:col-span-2">
+                  {renderGrowthChart()}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ==========================================
+              TAB 2: DAFTAR BALITA & INPUT DATA
+              ========================================== */}
+          {activeTab === 'data-anak' && (
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-800">Manajemen Data & Rekam Medis Anak</h2>
+                  <p className="text-xs text-slate-400">Pendaftaran data identitas balita baru serta penimbangan bulanan.</p>
+                </div>
+                
+                {/* Search Bar */}
+                <div className="relative">
+                  <input 
+                    type="text"
+                    placeholder="Cari NIK atau Nama Anak..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="text-xs font-semibold p-2.5 pl-8 rounded-xl border w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <span className="absolute left-2.5 top-3 text-slate-400 text-xs">🔍</span>
+                </div>
+              </div>
+
+              {/* MULTI PANEL: DAFTAR ANAK + FORM INPUT */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* LIST KIRI */}
+                <div className="lg:col-span-1 space-y-3">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pilih Balita Aktif</h3>
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                    {childrenList
+                      .filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.nik.includes(searchTerm))
+                      .map(child => {
+                        const risk = evaluateStuntingRisk(child, child.examinations[child.examinations.length-1]);
+                        return (
+                          <div 
+                            key={child.id}
+                            onClick={() => setSelectedChildId(child.id)}
+                            className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                              selectedChildId === child.id 
+                                ? 'bg-emerald-50 border-emerald-200 shadow-sm' 
+                                : 'bg-white hover:bg-slate-50 border-slate-100'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="text-xs font-extrabold text-slate-800">{child.name}</h4>
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${risk.color}`}>
+                                {risk.level}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 font-semibold">NIK: {child.nik}</p>
+                            <div className="flex justify-between items-center mt-2 border-t border-dashed pt-2 text-[10px] text-slate-500 font-semibold">
+                              <span>Lahir: {child.birthDate}</span>
+                              <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">{child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+
+                {/* FORM INPUT DAN HISTORI KANAN */}
+                <div className="lg:col-span-2 space-y-6">
+                  
+                  {/* DETAIL IDENTITAS & HISTORI KELAHIRAN ANAK TERPILIH */}
+                  {activeChild && (
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                      <div className="flex justify-between items-center border-b pb-3 mb-3">
+                        <h4 className="text-sm font-bold text-slate-800">📌 Profil Kartu Identitas & Riwayat Lahir</h4>
+                        <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">ID: {activeChild.id}</span>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                        <div>
+                          <p className="text-slate-400 font-semibold text-[10px]">AYAH / IBU</p>
+                          <p className="font-bold text-slate-700">{activeChild.fatherName} / {activeChild.motherName}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400 font-semibold text-[10px]">NOMOR TELEPON</p>
+                          <p className="font-bold text-slate-700">{activeChild.phone}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400 font-semibold text-[10px]">BERAT / PANJANG LAHIR</p>
+                          <p className="font-bold text-slate-700">{activeChild.birthWeight} kg / {activeChild.birthLength} cm</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400 font-semibold text-[10px]">PREMATUR / SANITASI</p>
+                          <p className="font-bold text-slate-700">
+                            {activeChild.isPremature ? 'Ya' : 'Tidak'} / {activeChild.poorSanitation ? 'Kurang Baik' : 'Baik'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* FORM PENDAFTARAN ANAK BARU (KHUSUS KADER / ADMIN) */}
+                  {(currentUserRole === 'kader' || currentUserRole === 'admin') && (
+                    <div className="bg-white border rounded-2xl p-5 shadow-sm">
+                      <h4 className="text-sm font-bold text-slate-800 mb-4 border-b pb-2">➕ Daftarkan Balita Baru</h4>
+                      <form onSubmit={handleAddChild} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input 
+                          type="text" 
+                          placeholder="NIK Anak (16 Digit)" 
+                          maxLength="16"
+                          value={newChild.nik}
+                          onChange={(e) => setNewChild({...newChild, nik: e.target.value.replace(/\D/g, '')})}
+                          className="text-xs p-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold"
+                          required
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Nama Lengkap Balita" 
+                          value={newChild.name}
+                          onChange={(e) => setNewChild({...newChild, name: e.target.value})}
+                          className="text-xs p-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold"
+                          required
+                        />
+                        <input 
+                          type="date" 
+                          value={newChild.birthDate}
+                          onChange={(e) => setNewChild({...newChild, birthDate: e.target.value})}
+                          className="text-xs p-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold"
+                          required
+                        />
+                        <select 
+                          value={newChild.gender}
+                          onChange={(e) => setNewChild({...newChild, gender: e.target.value})}
+                          className="text-xs p-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold"
+                        >
+                          <option value="L">Laki-laki</option>
+                          <option value="P">Perempuan</option>
+                        </select>
+                        <input 
+                          type="text" 
+                          placeholder="Nama Ibu Kandung" 
+                          value={newChild.motherName}
+                          onChange={(e) => setNewChild({...newChild, motherName: e.target.value})}
+                          className="text-xs p-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold"
+                          required
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Nama Ayah Kandung" 
+                          value={newChild.fatherName}
+                          onChange={(e) => setNewChild({...newChild, fatherName: e.target.value})}
+                          className="text-xs p-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold"
+                          required
+                        />
+                        <input 
+                          type="number" 
+                          step="0.1"
+                          placeholder="Berat Lahir (kg)" 
+                          value={newChild.birthWeight}
+                          onChange={(e) => setNewChild({...newChild, birthWeight: e.target.value})}
+                          className="text-xs p-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold"
+                          required
+                        />
+                        <input 
+                          type="number" 
+                          step="0.1"
+                          placeholder="Panjang Lahir (cm)" 
+                          value={newChild.birthLength}
+                          onChange={(e) => setNewChild({...newChild, birthLength: e.target.value})}
+                          className="text-xs p-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold"
+                          required
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="No. Telp Orang Tua" 
+                          value={newChild.phone}
+                          onChange={(e) => setNewChild({...newChild, phone: e.target.value})}
+                          className="text-xs p-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold"
+                          required
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Alamat Lengkap Rumah" 
+                          value={newChild.address}
+                          onChange={(e) => setNewChild({...newChild, address: e.target.value})}
+                          className="text-xs p-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold col-span-1 md:col-span-2"
+                          required
+                        />
+                        
+                        {/* Checkboxes */}
+                        <div className="flex gap-6 col-span-1 md:col-span-2 text-xs font-semibold text-slate-600 p-2">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={newChild.isPremature}
+                              onChange={(e) => setNewChild({...newChild, isPremature: e.target.checked})}
+                              className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            Kelahiran Prematur
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={newChild.poorSanitation}
+                              onChange={(e) => setNewChild({...newChild, poorSanitation: e.target.checked})}
+                              className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            Sanitasi Rumah Tidak Memadai
+                          </label>
+                        </div>
+
+                        <button 
+                          type="submit"
+                          className="col-span-1 md:col-span-2 py-3 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md hover:bg-emerald-700 transition-all"
+                        >
+                          Daftarkan Balita & Buat Kartu Tumbuh Kembang
+                        </button>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* FORM INPUT PENGUKURAN BULANAN (KHUSUS KADER / BIDAN) */}
+                  {(currentUserRole === 'kader' || currentUserRole === 'admin') && activeChild && (
+                    <div className="bg-white border rounded-2xl p-5 shadow-sm">
+                      <h4 className="text-sm font-bold text-slate-800 mb-4 border-b pb-2">🩺 Tambah Pengukuran Berkala ({activeChild.name})</h4>
+                      <form onSubmit={handleAddExamination} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tanggal Pemeriksaan</label>
+                          <input 
+                            type="date" 
+                            value={newExam.date}
+                            onChange={(e) => setNewExam({...newExam, date: e.target.value})}
+                            className="w-full text-xs p-2.5 rounded-lg border font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Berat Badan (kg)</label>
+                          <input 
+                            type="number" 
+                            step="0.01"
+                            placeholder="Contoh: 7.5"
+                            value={newExam.weight}
+                            onChange={(e) => setNewExam({...newExam, weight: e.target.value})}
+                            className="w-full text-xs p-2.5 rounded-lg border font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tinggi / Panjang Badan (cm)</label>
+                          <input 
+                            type="number" 
+                            step="0.1"
+                            placeholder="Contoh: 70.5"
+                            value={newExam.height}
+                            onChange={(e) => setNewExam({...newExam, height: e.target.value})}
+                            className="w-full text-xs p-2.5 rounded-lg border font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Lingkar Kepala (cm)</label>
+                          <input 
+                            type="number" 
+                            step="0.1"
+                            placeholder="Opsional"
+                            value={newExam.headCircumference}
+                            onChange={(e) => setNewExam({...newExam, headCircumference: e.target.value})}
+                            className="w-full text-xs p-2.5 rounded-lg border font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Lingkar Lengan Atas / LILA (cm)</label>
+                          <input 
+                            type="number" 
+                            step="0.1"
+                            placeholder="Opsional"
+                            value={newExam.muac}
+                            onChange={(e) => setNewExam({...newExam, muac: e.target.value})}
+                            className="w-full text-xs p-2.5 rounded-lg border font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-xl">
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={newExam.exclusiveBreastfeeding}
+                              onChange={(e) => setNewExam({...newExam, exclusiveBreastfeeding: e.target.checked})}
+                              className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            ASI Eksklusif
+                          </label>
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={newExam.mpasi}
+                              onChange={(e) => setNewExam({...newExam, mpasi: e.target.checked})}
+                              className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            Sudah Mulai MPASI
+                          </label>
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={newExam.infectionHistory}
+                              onChange={(e) => setNewExam({...newExam, infectionHistory: e.target.checked})}
+                              className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            Ada Riwayat Infeksi (2 Bln Terakhir)
+                          </label>
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={newExam.immunizationComplete}
+                              onChange={(e) => setNewExam({...newExam, immunizationComplete: e.target.checked})}
+                              className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            Imunisasi Sesuai Usia
+                          </label>
+                        </div>
+
+                        <button 
+                          type="submit"
+                          className="col-span-1 md:col-span-2 py-3 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md hover:bg-emerald-700 transition-all"
+                        >
+                          Simpan & Hitung Z-Score Standar WHO Otomatis
+                        </button>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* TABEL HISTORI PERTUMBUHAN ANAK AKTIF */}
+                  <div className="bg-white border rounded-2xl p-5 shadow-sm">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4 border-b pb-2">
+                      <h4 className="text-sm font-bold text-slate-800">Timeline Histori Kunjungan Penimbangan</h4>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleExportData('csv')} className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] rounded">Export CSV</button>
+                        <button onClick={() => handleExportData('json')} className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] rounded">Export JSON</button>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 text-slate-400 font-extrabold uppercase text-[10px] border-b">
+                            <th className="p-3">Umur</th>
+                            <th className="p-3">Tanggal</th>
+                            <th className="p-3">Berat (kg)</th>
+                            <th className="p-3">Tinggi (cm)</th>
+                            <th className="p-3">HAZ (Z-Score)</th>
+                            <th className="p-3">Status Stunting</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {activeChild?.examinations.length === 0 ? (
+                            <tr>
+                              <td colSpan="6" className="text-center p-8 text-slate-400 font-medium">Belum ada kunjungan penimbangan berkala tercatat.</td>
+                            </tr>
+                          ) : (
+                            activeChild?.examinations.map((ex, i) => (
+                              <tr key={ex.id} className="border-b hover:bg-slate-50 font-semibold">
+                                <td className="p-3">{ex.ageMonths} Bulan</td>
+                                <td className="p-3 text-slate-500">{ex.date}</td>
+                                <td className="p-3">{ex.weight} kg</td>
+                                <td className="p-3">{ex.height} cm</td>
+                                <td className={`p-3 font-bold ${ex.haz < -2 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                  {ex.haz} SD
+                                </td>
+                                <td className="p-3">
+                                  <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold border ${getStuntingStatus(ex.haz).color}`}>
+                                    {getStuntingStatus(ex.haz).label}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* NOTIFIKASI REMINDER JADWAL PENIMBANGAN */}
+                  {activeChild && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+                      <h4 className="text-sm font-bold text-emerald-800 mb-2">📢 Pengingat Jadwal Penimbangan & Imunisasi Berkala</h4>
+                      <p className="text-xs text-emerald-700 leading-relaxed font-semibold mb-4">
+                        Berdasarkan anjuran kader Posyandu, penimbangan berkala berikutnya dijadwalkan pada tanggal <span className="font-extrabold text-emerald-950">20 Juni 2026</span>.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <button 
+                          onClick={() => handleTriggerNotification('WhatsApp API', '20 Juni 2026')}
+                          className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                        >
+                          📲 Simulasi WhatsApp API (Kirim H-3)
+                        </button>
+                        <button 
+                          onClick={() => handleTriggerNotification('Email Notification', '20 Juni 2026')}
+                          className="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                        >
+                          ✉️ Simulasi Email
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ==========================================
+              TAB 3: LAPORAN PUSKESMAS
+              ========================================== */}
+          {activeTab === 'laporan' && (
+            <div className="space-y-6">
+              <div className="border-b pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-800">Laporan Kohort Bulanan & Evaluasi Wilayah</h2>
+                  <p className="text-xs text-slate-400">Pusat pelaporan berkala otomatis untuk validasi Puskesmas dan Dinas Kesehatan.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => triggerAlert("Sertifikat Laporan PDF", "Laporan resmi PDF berhasil diunduh.", "success")} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm">📥 Cetak Laporan Bulanan (PDF)</button>
+                  <button onClick={() => triggerAlert("Ekspor Excel", "File spreadsheet laporan wilayah terunduh.", "success")} className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow-sm">📊 Ekspor Laporan (Excel)</button>
+                </div>
+              </div>
+
+              {/* FILTERS */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Posyandu</label>
+                  <select 
+                    value={filterPosyandu} 
+                    onChange={(e) => setFilterPosyandu(e.target.value)}
+                    className="w-full p-2.5 rounded-lg border text-xs bg-white font-semibold focus:outline-none"
+                  >
+                    <option value="Semua">Semua Posyandu</option>
+                    <option value="Melati 1">Melati 1</option>
+                    <option value="Flamboyan 3">Flamboyan 3</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Periode Bulan / Tahun</label>
+                  <select 
+                    value={filterBulan}
+                    onChange={(e) => setFilterBulan(e.target.value)}
+                    className="w-full p-2.5 rounded-lg border text-xs bg-white font-semibold focus:outline-none"
+                  >
+                    <option value="Semua">Juni 2026 (Aktif)</option>
+                    <option value="Histori">Mei 2026</option>
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <button className="w-full p-2.5 bg-slate-200 text-slate-700 hover:bg-slate-300 transition-all rounded-lg font-bold text-xs">🔍 Terapkan Filter</button>
+                </div>
+              </div>
+
+              {/* REKAP TABULAR RESMI */}
+              <div className="border rounded-2xl overflow-hidden bg-white shadow-sm">
+                <div className="p-4 bg-slate-900 text-white flex justify-between items-center">
+                  <span className="text-xs font-extrabold tracking-wide uppercase">Rekapitulasi Gizi Balita & Cakupan Imunisasi Wilayah</span>
+                  <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded font-bold">Juni 2026</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-400 font-extrabold uppercase text-[10px] border-b">
+                        <th className="p-4">ID Anak</th>
+                        <th className="p-4">Nama Balita</th>
+                        <th className="p-4">Posyandu</th>
+                        <th className="p-4">Z-Score (HAZ)</th>
+                        <th className="p-4">Status Gizi</th>
+                        <th className="p-4">Intervensi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {childrenList
+                        .filter(c => filterPosyandu === 'Semua' || c.posyandu === filterPosyandu)
+                        .map(child => {
+                          const lastEx = child.examinations[child.examinations.length - 1];
+                          const haz = lastEx ? lastEx.haz : 'N/A';
+                          return (
+                            <tr key={child.id} className="border-b hover:bg-slate-50 font-semibold">
+                              <td className="p-4 text-slate-500">{child.id}</td>
+                              <td className="p-4 text-slate-900">{child.name}</td>
+                              <td className="p-4">{child.posyandu}</td>
+                              <td className={`p-4 font-bold ${haz !== 'N/A' && haz < -2 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                {haz} {haz !== 'N/A' && 'SD'}
+                              </td>
+                              <td className="p-4">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${lastEx ? getStuntingStatus(lastEx.haz).color : 'bg-slate-100 text-slate-400'}`}>
+                                  {lastEx ? getStuntingStatus(lastEx.haz).label : 'Belum Ditimbang'}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                {lastEx && lastEx.haz < -2 ? (
+                                  <span className="text-rose-600 font-bold bg-rose-50 px-2.5 py-1 rounded text-[10px] border border-rose-200">🚨 Prioritas Rujukan</span>
+                                ) : (
+                                  <span className="text-slate-400 font-medium">Pemantauan Rutin</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* MATRIKS STATUS VALIDASI (Puskesmas Level) */}
+              <div className="bg-slate-50 p-5 rounded-2xl border">
+                <h4 className="text-sm font-bold text-slate-800 mb-2">🔒 Status Validasi Puskesmas (E-PPGBM Integrasi)</h4>
+                <p className="text-xs text-slate-500 mb-4 leading-relaxed font-semibold">
+                  Validasi ini menandakan bahwa data pemeriksaan telah terverifikasi oleh tenaga medis Puskesmas dan siap diunggah ke Sistem Informasi Dinas Kesehatan (E-PPGBM).
+                </p>
+                {currentUserRole === 'puskesmas' || currentUserRole === 'admin' ? (
+                  <button 
+                    onClick={() => triggerAlert("Data Tervalidasi", "Data Juni 2026 telah ditandatangani digital & divalidasi ke E-PPGBM.", "success")}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+                  >
+                    ✍️ Klik untuk Validasi & Unggah Data Wilayah (Juni 2026)
+                  </button>
+                ) : (
+                  <span className="inline-block px-3 py-1.5 bg-slate-200 text-slate-500 rounded-lg text-xs font-bold">
+                    🔒 Fitur Validasi Hanya Terbuka untuk Peran Puskesmas / Admin
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ==========================================
+              TAB 4: PORTAL EDUKASI & INTERVENSI
+              ========================================== */}
+          {activeTab === 'edukasi' && (
+            <div className="space-y-6">
+              <div className="border-b pb-4">
+                <h2 className="text-lg font-extrabold text-slate-800">Edukasi Gizi & Panduan Intervensi Kasus</h2>
+                <p className="text-xs text-slate-400">Materi rujukan terpercaya pencegahan stunting berkolaborasi dengan Kementerian Kesehatan RI.</p>
+              </div>
+
+              {/* CARD MATERI EDUKASI */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {educationList.map(edu => (
+                  <div key={edu.id} className="bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 uppercase tracking-wider mb-2 inline-block">
+                      {edu.category}
+                    </span>
+                    <h4 className="text-xs font-extrabold text-slate-900 mb-2">{edu.title}</h4>
+                    <p className="text-slate-500 text-[11px] leading-relaxed mb-4">{edu.summary}</p>
+                    <div className="p-3 bg-slate-50 rounded-xl text-[10px] leading-relaxed text-slate-600 border border-slate-100 italic">
+                      💡 {edu.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ALUR ALGORITMA REKOMENDASI TERSEGMENTASI (JIKA ADA KASUS RISIKO TINGGI) */}
+              <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl">
+                <h4 className="text-sm font-bold text-amber-900 mb-2">📋 Protokol Penanganan Balita Stunting / Risiko Tinggi</h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-semibold mt-4">
+                  <div className="p-3.5 bg-white rounded-xl border border-amber-200">
+                    <span className="text-amber-500 font-extrabold text-lg block mb-1">Step 1</span>
+                    <h5 className="font-extrabold text-slate-800 mb-1">Rujukan Segera</h5>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Laporkan anak dengan Z-Score HAZ &lt; -2 SD ke Puskesmas pendamping wilayah.</p>
+                  </div>
+                  <div className="p-3.5 bg-white rounded-xl border border-amber-200">
+                    <span className="text-amber-500 font-extrabold text-lg block mb-1">Step 2</span>
+                    <h5 className="font-extrabold text-slate-800 mb-1">Kunjungan Rumah</h5>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Kader Posyandu melakukan kunjungan berkala guna menilai pola asuh, nutrisi, & sanitasi air.</p>
+                  </div>
+                  <div className="p-3.5 bg-white rounded-xl border border-amber-200">
+                    <span className="text-amber-500 font-extrabold text-lg block mb-1">Step 3</span>
+                    <h5 className="font-extrabold text-slate-800 mb-1">Pemberian PMT</h5>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Prioritaskan pemberian asupan nutrisi tambahan berupa protein hewani tinggi.</p>
+                  </div>
+                  <div className="p-3.5 bg-white rounded-xl border border-amber-200">
+                    <span className="text-amber-500 font-extrabold text-lg block mb-1">Step 4</span>
+                    <h5 className="font-extrabold text-slate-800 mb-1">Konfirmasi Medis</h5>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Evaluasi mingguan bersama Bidan Desa/Dokter guna memastikan laju pertumbuhan kembali positif.</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+        </main>
+      </div>
+
+      {/* FOOTER */}
+      <footer className="bg-slate-900 text-white/70 text-xs py-6 border-t border-slate-800 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 text-center space-y-2">
+          <p className="font-bold text-white">SiTumbuh - Sistem Informasi Kesehatan & Pemantauan Stunting Anak</p>
+          <p className="text-[11px] opacity-75">Merujuk pada Standar Antropometri Anak Kemenkes RI dan Kurva Standar Tumbuh Kembang Balita WHO.</p>
+          <p className="text-[10px] opacity-50 mt-4">© 2026 Dinas Kesehatan Kota Bandung. All Rights Reserved.</p>
+        </div>
+      </footer>
+
+    </div>
+  );
+}
