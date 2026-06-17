@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SiTumbuh</title>
-    <!-- Library Pembaca Aplikasi -->
+    <!-- Library Pembaca Aplikasi Standar -->
     <script src="https://cloudflare.com"></script>
     <script src="https://cloudflare.com"></script>
     <script src="https://cloudflare.com"></script>
@@ -13,19 +13,18 @@
   <body>
     <div id="root"></div>
 
-    <!-- Proses memanggil file App.jsx secara langsung -->
+    <!-- Script otomatis untuk membaca dan merakit file App.jsx Anda -->
     <script type="text/babel">
       async function luncurkanAplikasi() {
         try {
           const respon = await fetch('./App.jsx');
           const teksKode = await respon.text();
           
-          // Bersihkan kode dari tulisan import bawaan local agar tidak error di browser
+          // Membersihkan kode impor lokal agar tidak diblokir browser laptop
           const kodeBersih = teksKode
             .replace(/import\s+[\s\S]*?from\s+['"].*?['"];?/g, '')
             .replace(/export\s+default\s+/g, '');
 
-          // Terjemahkan dan jalankan kode aplikasi
           const kodeTerjemahan = Babel.transform(kodeBersih, { presets: ['react'] }).code;
           const KomponenApp = new Function('React', 'useState', 'useMemo', `${kodeTerjemahan}; return App;`)(React, React.useState, React.useMemo);
           
