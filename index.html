@@ -3,119 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SiTumbuh - Aplikasi Simulasi Tumbuh Kembang</title>
+    <title>SiTumbuh - Sistem Deteksi Dini Stunting & Monitoring Anak</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #f9fafb; color: #1f2937; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; max-width: 400px; width: 100%; margin-top: 40px; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #f3f4f6; box-sizing: border-box; }
-        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-        .logo { font-size: 30px; }
-        .title { font-size: 24px; font-weight: bold; color: #111827; margin: 0; }
-        .subtitle { font-size: 14px; color: #6b7280; margin-bottom: 24px; line-height: 1.4; }
-        .form-group { margin-bottom: 16px; }
-        .label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #374151; }
-        .input, .select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
-        .input:focus, .select:focus { outline: none; border-color: #16a34a; }
-        .btn { width: 100%; padding: 12px; background-color: #16a34a; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 8px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #f3f4f6; color: #1f2937; margin: 0; padding: 0; }
+        .navbar { background-color: #16a34a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .nav-brand { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; display: flex; gap: 20px; flex-wrap: wrap; }
+        .sidebar { flex: 1; min-width: 250px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: fit-content; }
+        .main-content { flex: 3; min-width: 300px; }
+        .card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h2 { margin-top: 0; color: #111827; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px; font-size: 18px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media(max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } .container { flex-direction: column; } }
+        .form-group { margin-bottom: 12px; }
+        .label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 4px; color: #4b5563; }
+        .input, .select { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 10px; background-color: #16a34a; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 10px; }
         .btn:hover { background-color: #15803d; }
-        .result { margin-top: 24px; padding: 16px; border-radius: 8px; border: 1px solid #d1d5db; display: none; }
-        .res-title { font-weight: bold; font-size: 14px; text-transform: uppercase; margin: 0 0 4px 0; }
-        .res-status { font-size: 18px; font-weight: 800; margin: 0 0 8px 0; }
-        .res-detail { font-size: 13px; margin: 0; opacity: 0.9; }
-        .normal { color: #16a34a; background-color: #f0fdf4; border-color: #bbf7d0; }
-        .stunted { color: #ea580c; background-color: #fff7ed; border-color: #ffedd5; }
-        .severe { color: #b91c1c; background-color: #fef2f2; border-color: #fee2e2; }
-        .tinggi { color: #2563eb; background-color: #eff6ff; border-color: #dbeafe; }
+        .role-btn { display: block; width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #e5e7eb; border-radius: 6px; background: #f9fafb; text-align: left; cursor: pointer; font-size: 13px; }
+        .role-active { background: #dcfce7; border-color: #16a34a; font-weight: bold; color: #15803d; }
+        .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: white; padding: 16px; border-radius: 8px; border-left: 4px solid #16a34a; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .kpi-val { font-size: 22px; font-weight: bold; margin: 4px 0; }
+        .kpi-lbl { font-size: 12px; color: #6b7280; }
+        .alert-box { padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #e5e7eb; }
+        .badge { padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .bg-red { background-color: #fef2f2; color: #991b1b; border-color: #fee2e2; }
+        .bg-orange { background-color: #fff7ed; color: #9a3412; border-color: #ffedd5; }
+        .bg-green { background-color: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        .table th, .table td { padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        .table th { background-color: #f9fafb; color: #4b5563; }
+        .disclaimer { max-width: 1100px; margin: 20px auto; padding: 15px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; color: #92400e; font-size: 11px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <div class="header">
-            <span class="logo">🌱</span>
-            <h1 class="title">SiTumbuh</h1>
-        </div>
-        <p class="subtitle">Simulasi Pengukuran Kategori Tinggi Badan Menurut Umur (0-24 Bulan)</p>
-        
-        <div class="form-group">
-            <label class="label">Nama Balita</label>
-            <input type="text" id="nama" class="input" placeholder="Masukkan nama balita">
-        </div>
-
-        <div class="form-group">
-            <label class="label">Usia Pengukuran</label>
-            <select id="usia" class="select">
-                <option value="0">0 Bulan</option>
-                <option value="3">3 Bulan</option>
-                <option value="6">6 Bulan</option>
-                <option value="9">9 Bulan</option>
-                <option value="12">12 Bulan</option>
-                <option value="15">15 Bulan</option>
-                <option value="18">18 Bulan</option>
-                <option value="21">21 Bulan</option>
-                <option value="24">24 Bulan</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label class="label">Tinggi Badan (cm)</label>
-            <input type="number" step="0.1" id="tinggi" class="input" placeholder="Contoh: 65.5">
-        </div>
-
-        <button class="btn" onclick="prosesAnalisis()">Analisis Status Tumbuh</button>
-
-        <div id="box-hasil" class="result">
-            <p id="hasil-nama" class="res-title"></p>
-            <p id="hasil-status" class="res-status"></p>
-            <p id="hasil-detail" class="res-detail"></p>
-        </div>
+    <div class="navbar">
+        <div class="nav-brand">🌱 SiTumbuh Digital</div>
+        <div id="current-role-indicator" class="badge bg-green">Mode: Kader Posyandu</div>
     </div>
 
-    <script>
-        const WHO_STANDARDS = {
-            0: { sd3neg: 44.2, sd2neg: 46.1, median: 49.9, sd2pos: 53.7, sd3pos: 55.6 },
-            3: { sd3neg: 57.3, sd2neg: 59.4, median: 61.4, sd2pos: 63.5, sd3pos: 65.6 },
-            6: { sd3neg: 63.3, sd2neg: 65.5, median: 67.8, sd2pos: 69.8, sd3pos: 71.9 },
-            9: { sd3neg: 67.5, sd2neg: 69.7, median: 72.0, sd2pos: 74.2, sd3pos: 76.5 },
-            12: { sd3neg: 71.0, sd2neg: 73.4, median: 75.7, sd2pos: 78.1, sd3pos: 80.5 },
-            15: { sd3neg: 74.1, sd2neg: 76.6, median: 79.1, sd2pos: 81.6, sd3pos: 84.1 },
-            18: { sd3neg: 76.9, sd2neg: 79.6, median: 82.3, sd2pos: 85.0, sd3pos: 87.7 },
-            21: { sd3neg: 79.4, sd2neg: 82.3, median: 85.1, sd2pos: 88.0, sd3pos: 90.9 },
-            24: { sd3neg: 81.7, sd2neg: 84.8, median: 87.8, sd2pos: 90.9, sd3pos: 93.9 }
-        };
-
-        function prosesAnalisis() {
-            const namaInput = document.getElementById('nama').value || 'Balita';
-            const usiaInput = parseInt(document.getElementById('usia').value);
-            const tinggiInput = parseFloat(document.getElementById('tinggi').value);
+    <div class="container">
+        <!-- SIDEBAR: MANAJEMEN ROLE -->
+        <div class="sidebar">
+            <h3 style="margin-top:0; font-size:14px; color:#6b7280;">SISTEM OTOMATIS ROLE BASED ACCES</h3>
+            <p style="font-size:12px; color:#9ca3af; margin-bottom:15px;">Klik untuk simulasikan sudut pandang akun:</p>
+            <button class="role-btn" id="btn-ortu" onclick="switchRole('Orang Tua')">👨‍👩- Orang Tua (Lihat Hasil & Edukasi)</button>
+            <button class="role-btn role-active" id="btn-kader" onclick="switchRole('Kader Posyandu')">⚕️- Kader Posyandu (Input Data & Ukur)</button>
+            <button class="role-btn" id="btn-puskes" onclick="switchRole('Petugas Puskesmas')">🏥- Petugas Puskesmas (Validasi & Wilayah)</button>
+            <button class="role-btn" id="btn-admin" onclick="switchRole('Admin')">⚙️- Admin / Dinkes (Semua Hak Akses)</button>
             
-            if (!tinggiInput) {
-                alert('Mohon masukkan angka tinggi badan terlebih dahulu!');
-                return;
-            }
+            <div style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px;">
+                <h3 style="font-size:13px; color:#374151;">Jadwal Penimbangan (WA Gateway)</h3>
+                <p id="wa-notif" style="font-size:11px; color:#059669; background:#ecfdf5; padding:8px; border-radius:6px; border:1px solid #a7f3d0;">🔔 Pengingat WA Otomatis diset untuk H-3 Kunjungan Posyandu.</p>
+            </div>
+        </div>
 
-            const standar = WHO_STANDARDS[usiaInput];
-            let status = "Normal";
-            let kelasWarna = "normal";
-
-            if (tinggiInput < standar.sd3neg) {
-                status = "Sangat Pendek (Severely Stunted)";
-                kelasWarna = "severe";
-            } else if (tinggiInput < standar.sd2neg) {
-                status = "Pendek (Stunted)";
-                kelasWarna = "stunted";
-            } else if (tinggiInput > standar.sd2pos) {
-                status = "Tinggi";
-                kelasWarna = "tinggi";
-            }
-
-            const boxHasil = document.getElementById('box-hasil');
-            boxHasil.className = "result " + kelasWarna;
-            boxHasil.style.display = "block";
+        <!-- MAIN WINDOW -->
+        <div class="main-content">
             
-            document.getElementById('hasil-nama').innerText = "Hasil Analisis " + namaInput + ":";
-            document.getElementById('hasil-status').innerText = status;
-            document.getElementById('hasil-detail').innerText = "Tinggi Badan: " + tinggiInput + " cm | Standar Median WHO: " + standar.median + " cm";
-        }
-    </script>
-</body>
-</html>
+            <!-- STATISTIK KPI DASHBOARD (Hanya untuk Kader, Puskesmas, Admin) -->
+            <div id="dashboard-analitik" class="kpi-container">
+                <div class="kpi-card" style="border-left-color: #2563eb;">
+                    <div class="kpi-lbl">Total Anak Terdaftar</div>
+                    <div id="kpi-total" class="kpi-val">1</div>
+                </div>
+                <div class="kpi-card" style="border-left-color: #dc2626;">
+                    <div class="kpi-lbl">Kasus Stunting (HAZ < -2)</div>
+                    <div id="kpi-stunting" class="kpi-val">0</div>
+                </div>
+                <div class="kpi-card" style="border-left-color: #ea580c;">
+                    <div class="kpi-lbl">Anak Risiko Tinggi Stunting</div>
+                    <div id="kpi-risiko" class="kpi-val">0</div>
+                </div>
+                <div class="kpi-card" style="border-left-color: #16a34a;">
+                    <div class="kpi-lbl">Cakupan ASI Eksklusif</div>
+                    <div class="kpi-val">100%</div>
+                </div>
+            </div>
+
+            <!-- FORM INPUT DATA (Hanya Muncul di Role Kader & Admin) -->
+            <div id="section-form-input" class="card">
+                <h2>1. Pencatatan Identitas Anak & Riwayat Kelahiran</h2>
+                <div class="grid-2">
+                    <div class="form-group"><label class="label">NIK Anak</label><input type="text" id="nik" class="input" placeholder="3207xxxxxxxxxxxx" value="3207123456789001"></div>
+                    <div class="form-group"><label class="label">Nama Lengkap Anak</label><input type="text" id="nama" class="input" placeholder="Masukkan nama anak" value="Naufal"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group"><label class="label">Tanggal Lahir</label><input type="date" id="tgl_lahir" class="input" value="2025-09-15"></div>
+                    <div class="form-group">
+                        <label class="label">Jenis Kelamin</label>
+                        <select id="jk" class="select"><option value="L">Laki-Laki</option><option value="P">Perempuan</option></select>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group"><label class="label">Berat Badan Lahir (kg)</label><input type="number" step="0.1" id="bb_lahir" class="input" value="2.4"></div>
+                    <div class="form-group"><label class="label">Panjang Badan Lahir (cm)</label><input type="number" step="0.1" id="pb_lahir" class="input" value="46"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="label">Kondisi Lahir Prematur</label>
+                        <select id="prematur" class="select"><option value="Ya">Ya (Kurang dari 37 Minggu)</option><option value="Tidak" selected>Tidak (Cukup Bulan)</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Riwayat Komplikasi Kelahiran</label>
+                        <select id="komplikasi" class="select"><option value="Tidak">Tidak Ada</option><option value="Ya">Ya (Asfiksia/Ikterus/Lainnya)</option></select>
+                    </div>
+                </div>
+
+                <h2 style="margin-top:20px;">2. Pengukuran Berkala Kunjungan Bulanan</h2>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="label">Usia Saat Pemeriksaan (Bulan)</label>
+                        <select id="usia_ukur" class="select">
+                            <option value="0">0 Bulan</option><option value="3">3 Bulan</option><option value="6">6 Bulan</option>
+                            <option value="9" selected>9 Bulan</option><option value="12">12 Bulan</option><option value="15">15 Bulan</option>
+                            <option value="18">18 Bulan</option><option value="21">21 Bulan</option><option value="24">24 Bulan</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="label">Berat Badan (kg)</label><input type="number" step="0.1" id="bb_ukur" class="input" value="7.1"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group"><label class="label">Tinggi/Panjang Badan (cm)</label><input type="number" step="0.1" id="tb_ukur" class="input" value="65.5"></div>
