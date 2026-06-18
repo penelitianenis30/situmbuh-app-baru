@@ -3,126 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SiTumbuh - Sistem Deteksi Dini Stunting & Monitoring Anak</title>
+    <title>SiTumbuh Digital - Sistem Monitoring Stunting Terintegrasi</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #f3f4f6; color: #1f2937; margin: 0; padding: 0; }
-        .navbar { background-color: #16a34a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .nav-brand { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; display: flex; gap: 20px; flex-wrap: wrap; }
-        .sidebar { flex: 1; min-width: 250px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: fit-content; }
-        .main-content { flex: 3; min-width: 300px; }
-        .card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        h2 { margin-top: 0; color: #111827; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px; font-size: 18px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        @media(max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } .container { flex-direction: column; } }
-        .form-group { margin-bottom: 12px; }
-        .label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 4px; color: #4b5563; }
-        .input, .select { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 10px; background-color: #16a34a; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 10px; }
-        .btn:hover { background-color: #15803d; }
-        .role-btn { display: block; width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #e5e7eb; border-radius: 6px; background: #f9fafb; text-align: left; cursor: pointer; font-size: 13px; }
-        .role-active { background: #dcfce7; border-color: #16a34a; font-weight: bold; color: #15803d; }
-        .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .kpi-card { background: white; padding: 16px; border-radius: 8px; border-left: 4px solid #16a34a; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .kpi-val { font-size: 22px; font-weight: bold; margin: 4px 0; }
-        .kpi-lbl { font-size: 12px; color: #6b7280; }
-        .alert-box { padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #e5e7eb; }
-        .badge { padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: bold; display: inline-block; }
-        .bg-red { background-color: #fef2f2; color: #991b1b; border-color: #fee2e2; }
-        .bg-orange { background-color: #fff7ed; color: #9a3412; border-color: #ffedd5; }
-        .bg-green { background-color: #f0fdf4; color: #166534; border-color: #bbf7d0; }
-        .table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        .table th, .table td { padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-        .table th { background-color: #f9fafb; color: #4b5563; }
-        .disclaimer { max-width: 1100px; margin: 20px auto; padding: 15px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; color: #92400e; font-size: 11px; text-align: center; }
+        .navbar { background-color: #059669; color: white; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .nav-brand { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: bold; }
+        .nav-badge { background-color: white; color: #059669; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .main-container { max-width: 1200px; margin: 24px auto; padding: 0 16px; display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+        .sidebar { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); height: fit-content; }
+        .sidebar-title { font-size: 13px; font-weight: bold; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; margin-bottom: 12px; }
+        .role-btn { width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 8px; border: 1px solid #e5e7eb; border-radius: 8px; background: white; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .role-btn:hover { background-color: #f9fafb; border-color: #d1d5db; }
+        .role-btn.active { background-color: #ecfdf5; border-color: #10b981; color: #047857; font-weight: bold; }
+        .wa-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 8px; font-size: 12px; color: #166534; margin-top: 20px; }
+        
+        .kpi-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 4px solid #d1d5db; }
+        .kpi-card.blue { border-left-color: #3b82f6; }
+        .kpi-card.red { border-left-color: #ef4444; }
+        .kpi-card.orange { border-left-color: #f97316; }
+        .kpi-card.green { border-left-color: #10b981; }
+        .kpi-title { font-size: 12px; color: #6b7280; margin: 0 0 4px 0; }
+        .kpi-value { font-size: 24px; font-weight: bold; margin: 0; color: #111827; }
+        
+        .panel { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px; display: none; }
+        .panel.active { display: block; }
+        .panel-title { font-size: 18px; font-weight: bold; color: #111827; margin: 0 0 20px 0; padding-bottom: 8px; border-bottom: 1px solid #f3f4f6; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .form-group { margin-bottom: 16px; box-sizing: border-box; }
+        .label { display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+        .input, .select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; box-sizing: border-box; background-color: #fff; }
+        .input:focus, .select:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+        .btn-submit { background-color: #10b981; color: white; font-weight: bold; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; width: 100%; transition: background 0.2s; }
+        .btn-submit:hover { background-color: #059669; }
+        
+        .result-box { margin-top: 24px; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb; background-color: #f9fafb; }
+        .status-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; margin-top: 4px; }
+        .status-normal { background-color: #d1fae5; color: #065f46; }
+        .status-stunted { background-color: #ffedd5; color: #9a3412; }
+        .status-severe { background-color: #fee2e2; color: #991b1b; }
+        
+        .table-data { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+        .table-data th, .table-data td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        .table-data th { background-color: #f9fafb; font-weight: 600; color: #374151; }
+        
+        .edu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .edu-card { border: 1px solid #e5e7eb; padding: 16px; border-radius: 8px; background-color: #fff; }
+        .edu-card h4 { margin: 0 0 8px 0; color: #047857; }
+        .edu-card p { margin: 0; font-size: 13px; color: #4b5563; line-height: 1.5; }
+        .disclaimer { font-size: 12px; color: #6b7280; text-align: center; margin-top: 40px; padding: 16px; border-top: 1px solid #e5e7eb; font-style: italic; }
     </style>
 </head>
 <body>
 
     <div class="navbar">
         <div class="nav-brand">🌱 SiTumbuh Digital</div>
-        <div id="current-role-indicator" class="badge bg-green">Mode: Kader Posyandu</div>
+        <div class="nav-badge" id="current-mode-label">Mode: Kader Posyandu</div>
     </div>
 
-    <div class="container">
-        <!-- SIDEBAR: MANAJEMEN ROLE -->
+    <div class="main-container">
+        <!-- SIDEBAR -->
         <div class="sidebar">
-            <h3 style="margin-top:0; font-size:14px; color:#6b7280;">SISTEM OTOMATIS ROLE BASED ACCES</h3>
-            <p style="font-size:12px; color:#9ca3af; margin-bottom:15px;">Klik untuk simulasikan sudut pandang akun:</p>
-            <button class="role-btn" id="btn-ortu" onclick="switchRole('Orang Tua')">👨‍👩- Orang Tua (Lihat Hasil & Edukasi)</button>
-            <button class="role-btn role-active" id="btn-kader" onclick="switchRole('Kader Posyandu')">⚕️- Kader Posyandu (Input Data & Ukur)</button>
-            <button class="role-btn" id="btn-puskes" onclick="switchRole('Petugas Puskesmas')">🏥- Petugas Puskesmas (Validasi & Wilayah)</button>
-            <button class="role-btn" id="btn-admin" onclick="switchRole('Admin')">⚙️- Admin / Dinkes (Semua Hak Akses)</button>
+            <div class="sidebar-title">Sistem Otomatis Role Based Access</div>
+            <button class="role-btn" id="btn-ortu" onclick="gantiRole('ortu')">👨‍👩‍👦 Orang Tua (Lihat Hasil & Edukasi)</button>
+            <button class="role-btn active" id="btn-kader" onclick="gantiRole('kader')">🩺 Kader Posyandu (Input Data & Ukur)</button>
+            <button class="role-btn" id="btn-puskes" onclick="gantiRole('puskes')">🏥 Petugas Puskesmas (Validasi & Wilayah)</button>
+            <button class="role-btn" id="btn-admin" onclick="gantiRole('admin')">⚙️ Admin / Dinkes (Semua Hak Akses)</button>
             
-            <div style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px;">
-                <h3 style="font-size:13px; color:#374151;">Jadwal Penimbangan (WA Gateway)</h3>
-                <p id="wa-notif" style="font-size:11px; color:#059669; background:#ecfdf5; padding:8px; border-radius:6px; border:1px solid #a7f3d0;">🔔 Pengingat WA Otomatis diset untuk H-3 Kunjungan Posyandu.</p>
+            <div class="wa-box">
+                <strong>Jadwal Penimbangan (WA Gateway)</strong><br>
+                🔔 Pengingat WA Otomatis diset otomatis untuk H-3 Kunjungan Posyandu.
             </div>
         </div>
 
-        <!-- MAIN WINDOW -->
-        <div class="main-content">
-            
-            <!-- STATISTIK KPI DASHBOARD (Hanya untuk Kader, Puskesmas, Admin) -->
-            <div id="dashboard-analitik" class="kpi-container">
-                <div class="kpi-card" style="border-left-color: #2563eb;">
-                    <div class="kpi-lbl">Total Anak Terdaftar</div>
-                    <div id="kpi-total" class="kpi-val">1</div>
+        <!-- MAIN CONTENT AREA -->
+        <div>
+            <!-- KPI CARDS -->
+            <div class="kpi-container">
+                <div class="kpi-card blue">
+                    <p class="kpi-title">Total Anak Terdaftar</p>
+                    <p class="kpi-value" id="kpi-total">1</p>
                 </div>
-                <div class="kpi-card" style="border-left-color: #dc2626;">
-                    <div class="kpi-lbl">Kasus Stunting (HAZ < -2)</div>
-                    <div id="kpi-stunting" class="kpi-val">0</div>
+                <div class="kpi-card red">
+                    <p class="kpi-title">Kasus Stunting (HAZ < -2)</p>
+                    <p class="kpi-value" id="kpi-stunting">0</p>
                 </div>
-                <div class="kpi-card" style="border-left-color: #ea580c;">
-                    <div class="kpi-lbl">Anak Risiko Tinggi Stunting</div>
-                    <div id="kpi-risiko" class="kpi-val">0</div>
+                <div class="kpi-card orange">
+                    <p class="kpi-title">Anak Risiko Tinggi</p>
+                    <p class="kpi-value" id="kpi-risiko">0</p>
                 </div>
-                <div class="kpi-card" style="border-left-color: #16a34a;">
-                    <div class="kpi-lbl">Cakupan ASI Eksklusif</div>
-                    <div class="kpi-val">100%</div>
+                <div class="kpi-card green">
+                    <p class="kpi-title">Cakupan ASI Eksklusif</p>
+                    <p class="kpi-value">100%</p>
                 </div>
             </div>
 
-            <!-- FORM INPUT DATA (Hanya Muncul di Role Kader & Admin) -->
-            <div id="section-form-input" class="card">
-                <h2>1. Pencatatan Identitas Anak & Riwayat Kelahiran</h2>
-                <div class="grid-2">
-                    <div class="form-group"><label class="label">NIK Anak</label><input type="text" id="nik" class="input" placeholder="3207xxxxxxxxxxxx" value="3207123456789001"></div>
-                    <div class="form-group"><label class="label">Nama Lengkap Anak</label><input type="text" id="nama" class="input" placeholder="Masukkan nama anak" value="Naufal"></div>
-                </div>
-                <div class="grid-2">
-                    <div class="form-group"><label class="label">Tanggal Lahir</label><input type="date" id="tgl_lahir" class="input" value="2025-09-15"></div>
-                    <div class="form-group">
-                        <label class="label">Jenis Kelamin</label>
-                        <select id="jk" class="select"><option value="L">Laki-Laki</option><option value="P">Perempuan</option></select>
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div class="form-group"><label class="label">Berat Badan Lahir (kg)</label><input type="number" step="0.1" id="bb_lahir" class="input" value="2.4"></div>
-                    <div class="form-group"><label class="label">Panjang Badan Lahir (cm)</label><input type="number" step="0.1" id="pb_lahir" class="input" value="46"></div>
-                </div>
+            <!-- PANEL 1: KADER POSYANDU (INPUT DATA) -->
+            <div id="panel-kader" class="panel active">
+                <h3 class="panel-title">1. Pencatatan Identitas Anak & Pemeriksaan Berkala</h3>
+                
                 <div class="grid-2">
                     <div class="form-group">
-                        <label class="label">Kondisi Lahir Prematur</label>
-                        <select id="prematur" class="select"><option value="Ya">Ya (Kurang dari 37 Minggu)</option><option value="Tidak" selected>Tidak (Cukup Bulan)</option></select>
+                        <label class="label">NIK Anak</label>
+                        <input type="text" id="nik" class="input" value="3207123456789001">
                     </div>
                     <div class="form-group">
-                        <label class="label">Riwayat Komplikasi Kelahiran</label>
-                        <select id="komplikasi" class="select"><option value="Tidak">Tidak Ada</option><option value="Ya">Ya (Asfiksia/Ikterus/Lainnya)</option></select>
+                        <label class="label">Nama Lengkap Anak</label>
+                        <input type="text" id="nama" class="input" value="Naufal">
                     </div>
                 </div>
 
-                <h2 style="margin-top:20px;">2. Pengukuran Berkala Kunjungan Bulanan</h2>
                 <div class="grid-2">
                     <div class="form-group">
-                        <label class="label">Usia Saat Pemeriksaan (Bulan)</label>
-                        <select id="usia_ukur" class="select">
-                            <option value="0">0 Bulan</option><option value="3">3 Bulan</option><option value="6">6 Bulan</option>
-                            <option value="9" selected>9 Bulan</option><option value="12">12 Bulan</option><option value="15">15 Bulan</option>
-                            <option value="18">18 Bulan</option><option value="21">21 Bulan</option><option value="24">24 Bulan</option>
+                        <label class="label">Usia Pengukuran (Bulan)</label>
+                        <select id="usia" class="select">
+                            <option value="0">0 Bulan</option>
+                            <option value="3">3 Bulan</option>
+                            <option value="6">6 Bulan</option>
+                            <option value="9" selected>9 Bulan</option>
+                            <option value="12">12 Bulan</option>
+                            <option value="18">18 Bulan</option>
+                            <option value="24">24 Bulan</option>
                         </select>
                     </div>
-                    <div class="form-group"><label class="label">Berat Badan (kg)</label><input type="number" step="0.1" id="bb_ukur" class="input" value="7.1"></div>
+                    <div class="form-group">
+                        <label class="label">Jenis Kelamin</label>
+                        <select id="jk" class="select">
+                            <option value="L">Laki-Laki</option>
+                            <option value="P">Perempuan</option>
+                        </select>
+                    </div>
                 </div>
+
                 <div class="grid-2">
-                    <div class="form-group"><label class="label">Tinggi/Panjang Badan (cm)</label><input type="number" step="0.1" id="tb_ukur" class="input" value="65.5"></div>
+                    <div class="form-group">
+                        <label class="label">Berat Badan (kg)</label>
+                        <input type="number" step="0.1" id="berat" class="input" placeholder="Contoh: 8.5" value="7.2">
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Tinggi / Panjang Badan (cm)</label>
+                        <input type="number" step="0.1" id="tinggi" class="input" placeholder="Contoh: 71.5" value="65.5">
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="label">Kondisi Lahir Prematur</label>
+                        <select id="prematur" class="select">
+                            <option value="tidak">Tidak (Cukup Bulan)</option>
+                            <option value="ya" selected>Ya (Kurang dari 37 Minggu)</option>
+                        </select>
